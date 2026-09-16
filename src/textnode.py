@@ -1,4 +1,5 @@
 from enum import Enum
+import re
 from htmlnode import LeafNode
 
 class Bender(Enum):
@@ -48,7 +49,27 @@ class TextNode:
 					new_nodes.append(TextNode(section, text_type))
 
 		return new_nodes
+	
+	def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
+		images = extract_markdown_images(old_nodes)
+		for image in images:
+			new_nodes.append(TextNode(image[0], TextType.IMAGE, image[1]))
+		return new_nodes
 
+	def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
+		links = extract_markdown_links(old_nodes)
+		for link in links:
+			new_nodes.append(TextNode(link[0], TextType.LINK, link[1]))
+		return new_nodes
+	
+	def text_to_textnodes(text: str) -> list[TextNode]:
+		nodes = []
+		nodes.extend(split_nodes_delimiter(text, "**", TextType.BOLD))
+		nodes.extend(split_nodes_delimiter(text, "*", TextType.ITALIC))
+		nodes.extend(split_nodes_delimiter(text, "`", TextType.CODE))
+		nodes.extend(split_nodes_image(text))
+		nodes.extend(split_nodes_link(text))
+		return nodes
 	
 def text_node_to_html_node(text_node: TextNode) -> LeafNode:
 
@@ -67,3 +88,15 @@ def text_node_to_html_node(text_node: TextNode) -> LeafNode:
 			return LeafNode("img", "", {"src": text_node.url, "alt": text_node.text})
 		case _:
 			raise ValueError(f"Invalid text type: {text_node.text_type}")
+
+
+def extract_markdown_images(text: str) -> list[tuple[str, str]]:
+	pattern = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
+	return re.findall(pattern, text)
+
+
+def extract_markdown_links(text: str) -> list[tuple[str, str]]:
+	pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
+	return re.findall(pattern, text)
+
+
