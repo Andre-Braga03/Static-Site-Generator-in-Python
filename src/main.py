@@ -1,6 +1,8 @@
 import os
 import shutil
 from markdown_blocks import generate_pages_recurvise
+import sys
+
 
 
 def copy_static(source: str, dest: str) -> None:
@@ -15,14 +17,15 @@ def copy_static(source: str, dest: str) -> None:
             shutil.copy(src_path, dest_path)
         else:
             copy_static(src_path, dest_path)
-
+ 
 def main() -> None:
-    dest = "public"
+    basepath = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else "/"
+    dest = "docs"
     if os.path.exists(dest):
         shutil.rmtree(dest)
     os.mkdir(dest)
     copy_static("static", dest)
-    generate_pages_recurvise("content", "template.html", dest)
+    generate_pages_recurvise("content", "template.html", dest, basepath)
 
 
 if __name__ == "__main__":
